@@ -1,6 +1,7 @@
 import numpy as np
+from cvxopt import matrix, solvers
 
-import cvxopt.solvers
+solvers.options['show_progress'] = False
 
 class Kernel:
     def linear():
@@ -9,7 +10,7 @@ class Kernel:
         return f
     def rbf(gamma):
         def f(x, y):
-            return np.exp( ( -1 ) * gamma * np.linalg.norm(x-y,ord=2)**2)
+            return np.exp( -gamma * np.linalg.norm(x-y,ord=2)**2)
         return f
     def polykernel(dimension, offset):
         def f(x, y):
@@ -42,11 +43,11 @@ class SVMPredictor(object):
         return res
     
 class SVMTrainer():
-    def __init__(self, kernel, C=1, gamma=1):
+    def __init__(self, kernel, C=1):
         if kernel=="rbf":
             self._kernel = Kernel.rbf(gamma)
         else:
-            self._kernel = kernel.linear()
+            self._kernel = Kernel.linear()
         self._c = C
     def compute_b(self,multipliers, X, y):
          return np.mean([y_j - np.sum([alpha*y_i*self._kernel(x_i,x_j)
@@ -60,24 +61,24 @@ class SVMTrainer():
     def fit(self, X, y):
         n_samples = X.shape[0]
         K=self.gram(X,n_samples)
-        P = cvxopt.matrix(np.outer(y, y) * K)
-        q = cvxopt.matrix(-1 * np.ones(n_samples))
+        P = matrix(np.outer(y, y) * K)
+        q = matrix(-1 * np.ones(n_samples))
         # Equality constraints
-        A = cvxopt.matrix(y, (1, n_samples))
-        b = cvxopt.matrix(0.0)
+        A = matrix(y, (1, n_samples))
+        b = matrix(0.0)
         # Inequality constraints
-        G_std = cvxopt.matrix(np.diag(-1 * np.ones(n_samples)))
-        h_std = cvxopt.matrix(np.zeros(n_samples))
+        G_std = matrix(np.diag(-1 * np.ones(n_samples)))
+        h_std = matrix(np.zeros(n_samples))
 
-        G_soft = cvxopt.matrix(np.diag(np.ones(n_samples)))
-        h_soft = cvxopt.matrix(np.ones(n_samples) * self._c)
+        G_soft = matrix(np.diag(np.ones(n_samples)))
+        h_soft = matrix(np.ones(n_samples) * self._c)
 
-        G = cvxopt.matrix(np.vstack((G_std, G_soft)))
-        h = cvxopt.matrix(np.vstack((h_std, h_soft)))
+        G = matrix(np.vstack((G_std, G_soft)))
+        h = matrix(np.vstack((h_std, h_soft)))
 
 
         # Solve the problem
-        solution = cvxopt.solvers.qp(P, q, G, h, A, b)
+        solution = solvers.qp(P, q, G, h, A, b)
         # Lagrange multipliers
         multipliers = np.ravel(solution['x'])
         # Support vectors have positive multipliers.

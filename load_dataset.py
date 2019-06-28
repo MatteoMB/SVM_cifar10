@@ -2,6 +2,8 @@ import numpy as np
 import pickle
 import os
 
+
+
 classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -60,4 +62,5 @@ def get_CIFAR10_data(cl0 = 0, cl1 = 6, num_training=10000, num_test=2000):
     x_train /= 255
     x_test /= 255
 
-    return x_train[:num_training], y_train[:num_training], x_test[:num_test], y_test[num_test] 
+    return x_train[:num_training], y_train[:num_training], x_test[:num_test], y_test[:num_test] 
+
